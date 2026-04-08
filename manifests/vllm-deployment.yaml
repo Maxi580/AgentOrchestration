@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/gpu-worker: ""
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - "--model"
+            - "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+            - "--port"
+            - "8000"
+          env:
+            - name: HF_HOME
+              value: /tmp/huggingface
+            - name: FLASHINFER_WORKSPACE_DIR
+              value: /tmp/flashinfer
+            - name: VLLM_CACHE_ROOT
+              value: /tmp/vllm
+            - name: HOME
+              value: /tmp
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: cache
+              mountPath: /tmp
+      volumes:
+        - name: cache
+          emptyDir: {}
