@@ -5,6 +5,8 @@ metadata:
   namespace: maxi-agent-orchestration
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: langgraph-app
