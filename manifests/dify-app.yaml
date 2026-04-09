@@ -16,15 +16,20 @@ spec:
       labels:
         app: dify-api
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: dify-api
           image: langgenius/dify-api:1.5.1
-          args: []
           ports:
             - containerPort: 5001
           envFrom:
             - configMapRef:
                 name: dify-config
+            - secretRef:
+                name: dify-secret
           env:
             - name: MODE
               value: "api"
@@ -57,7 +62,7 @@ spec:
       targetPort: 5001
 ---
 # =============================================
-# Dify Worker (background jobs via Celery)
+# Dify Worker (Celery background jobs)
 # =============================================
 apiVersion: apps/v1
 kind: Deployment
@@ -74,12 +79,18 @@ spec:
       labels:
         app: dify-worker
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: dify-worker
           image: langgenius/dify-api:1.5.1
           envFrom:
             - configMapRef:
                 name: dify-config
+            - secretRef:
+                name: dify-secret
           env:
             - name: MODE
               value: "worker"
@@ -117,6 +128,10 @@ spec:
       labels:
         app: dify-web
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: dify-web
           image: langgenius/dify-web:1.5.1
@@ -167,17 +182,21 @@ spec:
       labels:
         app: dify-sandbox
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: sandbox
           image: langgenius/dify-sandbox:0.2.10
           ports:
             - containerPort: 8194
-          envFrom:
-            - configMapRef:
-                name: dify-config
           env:
             - name: API_KEY
-              value: "dify-sandbox"
+              valueFrom:
+                secretKeyRef:
+                  name: dify-secret
+                  key: SANDBOX_API_KEY
             - name: GIN_MODE
               value: "release"
             - name: WORKER_TIMEOUT
@@ -266,6 +285,10 @@ spec:
       labels:
         app: dify-ssrf
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: ssrf
           image: ubuntu/squid:latest

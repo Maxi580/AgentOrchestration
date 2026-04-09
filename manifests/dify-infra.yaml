@@ -16,17 +16,21 @@ spec:
       labels:
         app: dify-postgres
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: postgres
           image: pgvector/pgvector:pg16
           ports:
             - containerPort: 5432
-          envFrom:
-            - configMapRef:
-                name: dify-config
           env:
             - name: POSTGRES_PASSWORD
-              value: "difyai123456"
+              valueFrom:
+                secretKeyRef:
+                  name: dify-secret
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               value: "dify"
             - name: PGDATA
@@ -75,10 +79,23 @@ spec:
       labels:
         app: dify-redis
     spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: redis
           image: redis:7-alpine
-          command: ["redis-server", "--requirepass", "difyai123456", "--maxmemory", "256mb"]
+          command:
+            - sh
+            - -c
+            - redis-server --requirepass $(REDIS_PASSWORD) --maxmemory 256mb
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dify-secret
+                  key: REDIS_PASSWORD
           ports:
             - containerPort: 6379
           resources:
@@ -88,7 +105,6 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "200m"
-      volumes: []
 ---
 apiVersion: v1
 kind: Service
