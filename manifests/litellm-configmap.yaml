@@ -19,3 +19,4 @@ data:
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
       disable_spend_logs: true 
+      modify_params: true
