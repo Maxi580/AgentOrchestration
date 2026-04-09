@@ -34,6 +34,8 @@ spec:
               value: "/data/.langflow"
             - name: LANGFLOW_AUTO_LOGIN
               value: "true"
+            - name: LANGFLOW_ALEMBIC_LOG_FILE
+              value: "/data/alembic.log"
           resources:
             requests:
               memory: "512Mi"
