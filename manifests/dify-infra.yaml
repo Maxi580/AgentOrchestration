@@ -1,0 +1,103 @@
+# =============================================
+# PostgreSQL (with pgvector)
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-postgres
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-postgres
+  template:
+    metadata:
+      labels:
+        app: dify-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg16
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: dify-config
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "difyai123456"
+            - name: POSTGRES_DB
+              value: "dify"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: pgdata
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-postgres
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# =============================================
+# Redis
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-redis
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-redis
+  template:
+    metadata:
+      labels:
+        app: dify-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command: ["redis-server", "--requirepass", "difyai123456", "--maxmemory", "256mb"]
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-redis
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

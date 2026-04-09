@@ -1,0 +1,300 @@
+# =============================================
+# Dify API Server
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-api
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-api
+  template:
+    metadata:
+      labels:
+        app: dify-api
+    spec:
+      containers:
+        - name: dify-api
+          image: langgenius/dify-api:1.5.1
+          args: []
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - configMapRef:
+                name: dify-config
+          env:
+            - name: MODE
+              value: "api"
+            - name: HOME
+              value: "/tmp"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: storage
+              mountPath: /app/api/storage
+      volumes:
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-api
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-api
+  ports:
+    - port: 5001
+      targetPort: 5001
+---
+# =============================================
+# Dify Worker (background jobs via Celery)
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-worker
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-worker
+  template:
+    metadata:
+      labels:
+        app: dify-worker
+    spec:
+      containers:
+        - name: dify-worker
+          image: langgenius/dify-api:1.5.1
+          envFrom:
+            - configMapRef:
+                name: dify-config
+          env:
+            - name: MODE
+              value: "worker"
+            - name: HOME
+              value: "/tmp"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: storage
+              mountPath: /app/api/storage
+      volumes:
+        - name: storage
+          emptyDir: {}
+---
+# =============================================
+# Dify Web (Next.js frontend)
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-web
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-web
+  template:
+    metadata:
+      labels:
+        app: dify-web
+    spec:
+      containers:
+        - name: dify-web
+          image: langgenius/dify-web:1.5.1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: CONSOLE_API_URL
+              value: ""
+            - name: APP_API_URL
+              value: ""
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-web
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-web
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+# =============================================
+# Dify Sandbox (code execution)
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-sandbox
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-sandbox
+  template:
+    metadata:
+      labels:
+        app: dify-sandbox
+    spec:
+      containers:
+        - name: sandbox
+          image: langgenius/dify-sandbox:0.2.10
+          ports:
+            - containerPort: 8194
+          envFrom:
+            - configMapRef:
+                name: dify-config
+          env:
+            - name: API_KEY
+              value: "dify-sandbox"
+            - name: GIN_MODE
+              value: "release"
+            - name: WORKER_TIMEOUT
+              value: "15"
+            - name: ENABLE_NETWORK
+              value: "true"
+            - name: HTTP_PROXY
+              value: "http://dify-ssrf:3128"
+            - name: HTTPS_PROXY
+              value: "http://dify-ssrf:3128"
+            - name: SANDBOX_PORT
+              value: "8194"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-sandbox
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-sandbox
+  ports:
+    - port: 8194
+      targetPort: 8194
+---
+# =============================================
+# SSRF Proxy (Squid)
+# =============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dify-ssrf-config
+  namespace: maxi-agent-orchestration
+data:
+  squid.conf: |
+    acl localnet src 0.0.0.1-0.255.255.255
+    acl localnet src 10.0.0.0/8
+    acl localnet src 100.64.0.0/10
+    acl localnet src 169.254.0.0/16
+    acl localnet src 172.16.0.0/12
+    acl localnet src 192.168.0.0/16
+    acl SSL_ports port 443
+    acl Safe_ports port 80
+    acl Safe_ports port 21
+    acl Safe_ports port 443
+    acl Safe_ports port 70
+    acl Safe_ports port 210
+    acl Safe_ports port 1025-65535
+    acl Safe_ports port 280
+    acl Safe_ports port 488
+    acl Safe_ports port 591
+    acl Safe_ports port 777
+    http_access deny !Safe_ports
+    http_access deny CONNECT !SSL_ports
+    http_access allow localhost manager
+    http_access deny manager
+    http_access allow localhost
+    http_access allow localnet
+    http_access deny all
+    http_port 3128
+    coredump_dir /var/spool/squid
+    refresh_pattern ^ftp:           1440    20%     10080
+    refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
+    refresh_pattern .               0       20%     4320
+    dns_nameservers 8.8.8.8 8.8.4.4
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dify-ssrf
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dify-ssrf
+  template:
+    metadata:
+      labels:
+        app: dify-ssrf
+    spec:
+      containers:
+        - name: ssrf
+          image: ubuntu/squid:latest
+          ports:
+            - containerPort: 3128
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: squid-config
+              mountPath: /etc/squid/squid.conf
+              subPath: squid.conf
+      volumes:
+        - name: squid-config
+          configMap:
+            name: dify-ssrf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dify-ssrf
+  namespace: maxi-agent-orchestration
+spec:
+  selector:
+    app: dify-ssrf
+  ports:
+    - port: 3128
+      targetPort: 3128
