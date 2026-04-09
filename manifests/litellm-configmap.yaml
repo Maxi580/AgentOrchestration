@@ -3,14 +3,6 @@ kind: ConfigMap
 metadata:
   name: litellm-config
   namespace: maxi-agent-orchestration
-env:
-  - name: HOME
-    value: /tmp
-  - name: LITELLM_MASTER_KEY
-    valueFrom:
-      secretKeyRef:
-        name: litellm-secret
-        key: master_key
 data:
   config.yaml: |
     model_list:
