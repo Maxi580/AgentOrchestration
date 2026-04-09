@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langgraph-app
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langgraph-app
+  template:
+    metadata:
+      labels:
+        app: langgraph-app
+    spec:
+      containers:
+        - name: langgraph-app
+          image: your-registry/langgraph-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LITELLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secret
+                  key: master_key
+            - name: LITELLM_BASE_URL
+              value: "http://litellm-service:4000/v1"
+            - name: MODEL_NAME
+              value: "tinyllama"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
