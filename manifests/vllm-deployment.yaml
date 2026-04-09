@@ -24,12 +24,12 @@ spec:
           image: vllm/vllm-openai:latest
           args:
             - "--model"
-            - "mistralai/Mistral-7B-Instruct-v0.3"
+            - "Qwen/Qwen2.5-7B-Instruct"
             - "--port"
             - "8000"
             - "--enable-auto-tool-choice"
             - "--tool-call-parser"
-            - "mistral"
+            - "hermes"
           env:
             - name: HF_HOME
               value: /tmp/huggingface

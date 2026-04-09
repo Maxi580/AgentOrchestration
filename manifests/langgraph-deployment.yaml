@@ -25,7 +25,7 @@ spec:
             - name: LITELLM_BASE_URL
               value: "http://vllm-service:8000/v1"
             - name: MODEL_NAME
-              value: "mistralai/Mistral-7B-Instruct-v0.3"
+              value: "Qwen/Qwen2.5-7B-Instruct"
             - name: LITELLM_API_KEY
               value: "none"
           resources:
