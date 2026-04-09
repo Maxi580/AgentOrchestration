@@ -21,9 +21,4 @@ spec:
     to:
       kind: ImageStreamTag
       name: langgraph-app:latest
-  triggers:
-    - type: ConfigChange
-    - type: GitHub
-      github:
-        secretReference:
-          name: github-webhook-secret
+  triggers: []
