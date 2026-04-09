@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: maxi-agent-orchestration
+data:
+  config.yaml: |
+    model_list:
+      - model_name: tinyllama
+        litellm_params:
+          model: openai/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+          api_base: http://vllm-service:8000/v1
+          api_key: none
+
+    litellm_settings:
+      drop_params: true
+      request_timeout: 600
+
+    general_settings:
+      master_key: sk-maxi-secret-key
