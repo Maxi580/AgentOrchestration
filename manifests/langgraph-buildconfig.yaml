@@ -1,0 +1,25 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: langgraph-app
+  namespace: maxi-agent-orchestration
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: langgraph-app
+  namespace: maxi-agent-orchestration
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/your-user/AgentOrchestration.git
+    contextDir: langgraph-app/test-agent
+  strategy:
+    type: Docker
+  output:
+    to:
+      kind: ImageStreamTag
+      name: langgraph-app:latest
+  triggers:
+    - type: ConfigChange
