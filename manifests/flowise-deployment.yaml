@@ -26,6 +26,8 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            - name: HOME
+              value: "/data"
             - name: FLOWISE_USERNAME
               value: "admin"
             - name: FLOWISE_PASSWORD
