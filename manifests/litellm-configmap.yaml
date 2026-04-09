@@ -6,9 +6,9 @@ metadata:
 data:
   config.yaml: |
     model_list:
-      - model_name: tinyllama
+      - model_name: mistral
         litellm_params:
-          model: openai/TinyLlama/TinyLlama-1.1B-Chat-v1.0
+          model: openai/mistralai/Mistral-7B-Instruct-v0.3
           api_base: http://vllm-service:8000/v1
           api_key: none
 
@@ -18,3 +18,4 @@ data:
 
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
+      disable_spend_logs: true 

@@ -20,7 +20,7 @@ llm = ChatOpenAI(
 
 
 def agent(state: AgentState) -> AgentState:
-    system = SystemMessage(content="You are a helpful assistant that ...")
+    system = SystemMessage(content="You are a helpful ai agent, that likes to talk about mountains.")
     response = llm.invoke([system] + state["messages"])
     return {"messages": [response]}
 

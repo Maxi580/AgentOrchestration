@@ -24,7 +24,7 @@ spec:
           image: vllm/vllm-openai:latest
           args:
             - "--model"
-            - "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+            - "mistralai/Mistral-7B-Instruct-v0.3"
             - "--port"
             - "8000"
           env:
