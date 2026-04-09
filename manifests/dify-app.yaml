@@ -189,6 +189,7 @@ spec:
       containers:
         - name: sandbox
           image: langgenius/dify-sandbox:0.2.10
+          workingDir: "/app"
           ports:
             - containerPort: 8194
           env:
