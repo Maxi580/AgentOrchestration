@@ -216,6 +216,12 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "300m"
+          volumeMounts:
+            - name: sandbox-logs
+              mountPath: /app/logs
+      volumes:
+        - name: sandbox-logs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -269,6 +275,9 @@ data:
     refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
     refresh_pattern .               0       20%     4320
     dns_nameservers 8.8.8.8 8.8.4.4
+    pid_filename /tmp/squid.pid
+    cache_log /tmp/cache.log
+    access_log /tmp/access.log
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -305,10 +314,22 @@ spec:
             - name: squid-config
               mountPath: /etc/squid/squid.conf
               subPath: squid.conf
+            - name: squid-cache
+              mountPath: /var/spool/squid
+            - name: squid-log
+              mountPath: /var/log/squid
+            - name: squid-tmp
+              mountPath: /tmp
       volumes:
         - name: squid-config
           configMap:
             name: dify-ssrf-config
+        - name: squid-cache
+          emptyDir: {}
+        - name: squid-log
+          emptyDir: {}
+        - name: squid-tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
