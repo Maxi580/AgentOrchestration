@@ -1,0 +1,49 @@
+# =============================================
+# Langflow - AI Workflow Builder
+# =============================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langflow
+  namespace: maxi-agent-orchestration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langflow
+  template:
+    metadata:
+      labels:
+        app: langflow
+    spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: langflow
+          image: langflowai/langflow:latest
+          ports:
+            - containerPort: 7860
+          env:
+            - name: HOME
+              value: "/data"
+            - name: LANGFLOW_DATABASE_URL
+              value: "sqlite:////data/langflow.db"
+            - name: LANGFLOW_CONFIG_DIR
+              value: "/data/.langflow"
+            - name: LANGFLOW_AUTO_LOGIN
+              value: "true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            - name: langflow-data
+              mountPath: /data
+      volumes:
+        - name: langflow-data
+          emptyDir: {}
