@@ -22,15 +22,12 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            - name: LITELLM_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: litellm-secret
-                  key: master_key
             - name: LITELLM_BASE_URL
-              value: "http://litellm-service:4000/v1"
+              value: "http://vllm-service:8000/v1"
             - name: MODEL_NAME
-              value: "mistral"
+              value: "mistralai/Mistral-7B-Instruct-v0.3"
+            - name: LITELLM_API_KEY
+              value: "none"
           resources:
             requests:
               memory: "256Mi"
