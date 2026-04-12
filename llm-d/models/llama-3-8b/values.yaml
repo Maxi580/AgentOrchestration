@@ -1,0 +1,38 @@
+modelArtifact:
+  uri: "hf://meta-llama/Llama-3.1-8B-Instruct"
+  secretRef:
+    name: llm-d-hf-token
+  labels:
+    app: vllm-llama-3-8b
+
+  routing:
+    servicePort: 8000
+
+decode:
+  replicas: 2
+
+  parallelism:
+    tensor: 1
+  containers:
+    - name: vllm
+      args:
+        - "--model"
+        - "meta-llama/Llama-3.1-8B-Instruct"
+        - "--port"
+        - "8000"
+        - "--served-model-name"
+        - "meta-llama/Llama-3.1-8B-Instruct"
+        - "--enable-chunked-prefill"
+        - "--max-model-len"
+        - "8192"
+
+  nodeSelector:
+    node-role.kubernetes.io/gpu-worker: ""
+
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+prefill:
+  replicas: 0

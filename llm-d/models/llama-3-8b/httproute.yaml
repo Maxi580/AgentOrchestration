@@ -1,0 +1,20 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: llama-3-8b-route
+  namespace: maxi-agent-orchestration
+spec:
+  parentRefs:
+    - name: infra-inference-scheduling-inference-gateway
+      namespace: maxi-agent-orchestration
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: inference.networking.k8s.io
+          kind: InferencePool
+          name: ms-llama-pool
+          port: 8000

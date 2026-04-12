@@ -1,0 +1,29 @@
+repositories:
+  - name: llm-d-infra
+    url: https://llm-d-incubation.github.io/llm-d-infra/
+
+  - name: llm-d-modelservice
+    url: https://llm-d-incubation.github.io/llm-d-modelservice/
+
+releases:
+  - name: infra
+    chart: llm-d-infra/llm-d-infra
+    version: v1.4.0
+    values:
+      - infra/values.yaml
+
+  - name: gaie-llama
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.4.0
+    needs:
+      - infra
+    values:
+      - gaie/values.yaml
+
+  - name: ms-llama
+    chart: llm-d-modelservice/llm-d-modelservice
+    version: v0.4.9
+    needs:
+      - gaie-llama
+    values:
+      - models/llama-3-8b/values.yaml
