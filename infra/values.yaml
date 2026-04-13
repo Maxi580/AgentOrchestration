@@ -1,14 +1,5 @@
-
 gateway:
-
-  gatewayClassName: istio
-
-  serviceType: ClusterIP
-
-  listeners:
-    - name: http
-      port: 80
-      protocol: HTTP
-
-openshift:
-  floatingUserId: true
+  provider: istio
+  gatewayClassName: "data-science-gateway-class"
+  service:
+    type: ClusterIP
