@@ -1,0 +1,13 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: llama-stack
+  namespace: maxi-agent-orchestration
+spec:
+  to:
+    kind: Service
+    name: llama-stack
+  port:
+    targetPort: 8321
+  tls:
+    termination: edge

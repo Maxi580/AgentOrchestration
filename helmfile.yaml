@@ -18,7 +18,7 @@ releases:
     needs:
       - infra
     values:
-      - gaie/values.yaml
+      - gaie/llama-values.yaml
 
   - name: ms-llama
     chart: llm-d-modelservice/llm-d-modelservice
@@ -27,3 +27,35 @@ releases:
       - gaie-llama
     values:
       - models/llama-3-8b/values.yaml
+
+  - name: gaie-phi-4
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.4.0
+    needs:
+      - infra
+    values:
+      - gaie/phi-4-values.yaml
+
+  - name: ms-phi-4
+    chart: llm-d-modelservice/llm-d-modelservice
+    version: v0.4.9
+    needs:
+      - gaie-phi-4
+    values:
+      - models/phi4/values.yaml
+
+  - name: gaie-qwen3
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.4.0
+    needs:
+      - infra
+    values:
+      - gaie/qwen3-8b-values.yaml
+
+  - name: ms-qwen3
+    chart: llm-d-modelservice/llm-d-modelservice
+    version: v0.4.9
+    needs:
+      - gaie-qwen3
+    values:
+      - models/qwen/values.yaml

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-stack
+  namespace: maxi-agent-orchestration
+  labels:
+    app: llama-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-stack
+  template:
+    metadata:
+      labels:
+        app: llama-stack
+    spec:
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: llama-stack
+          image: docker.io/llamastack/distribution-starter:0.7.1
+          args:
+            - "--port"
+            - "8321"
+          ports:
+            - containerPort: 8321
+              name: http
+          env:
+            - name: LLAMA_STACK_PORT
+              value: "8321"
+            - name: INFERENCE_MODEL
+              value: "meta-llama/Llama-3.1-8B"
+            - name: VLLM_URL
+              value: "http://infra-inference-gateway-data-science-gateway-class:80/v1"
+            - name: ENABLE_VLLM
+              value: "vllm"
+            - name: HOME
+              value: /tmp
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
+          volumeMounts:
+            - name: llama-storage
+              mountPath: /tmp/.llama
+      volumes:
+        - name: llama-storage
+          emptyDir: {}

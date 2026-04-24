@@ -1,13 +1,13 @@
 modelArtifacts:
-  name: "meta-llama/Llama-3.1-8B"
-  uri: "hf://meta-llama/Llama-3.1-8B"
+  name: "microsoft/Phi-4-mini-instruct"
+  uri: "hf://microsoft/Phi-4-mini-instruct"
   authSecretName: "llm-d-hf-token"
 
   labels:
-    app: vllm-llama-3-8b
+    app: vllm-phi-4
     llm-d.ai/inference-serving: "true"
 
-  size: 20Gi
+  size: 10Gi
 
 decode:
   replicas: 1
@@ -30,7 +30,7 @@ decode:
       mountModelVolume: true
       args:
         - "--served-model-name"
-        - "meta-llama/Llama-3.1-8B"
+        - "microsoft/Phi-4-mini-instruct"
         - "--max-model-len"
         - "4096"
       env:

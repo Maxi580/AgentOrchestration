@@ -17,26 +17,18 @@ inferenceExtension:
         name: default
       spec:
         plugins:
-          # Scores each vLLM pod based on how many requests are queued.
           - type: queue-scorer
-
-          # Scores pods based on whether they already have cached KV data
           - type: prefix-scorer
-
-          # Prefers pods with more free KV cache memory.
           - type: least-kv-cache-scorer
-
-          # After all scorers run, this picks the pod with the highest total score.
           - type: max-score-picker
 
-        # Chains the plugins together into a named pipeline.
         schedulingProfiles:
           - name: default
             plugins:
               - pluginRef: queue-scorer
                 weight: 1.0
               - pluginRef: prefix-scorer
-                weight: 1.0                           # equal weight = balanced decision
+                weight: 1.0
               - pluginRef: least-kv-cache-scorer
                 weight: 1.0
               - pluginRef: max-score-picker
@@ -57,4 +49,4 @@ inferencePool:
 
   modelServers:
     matchLabels:
-      app: vllm-llama-3-8b
+      app: vllm-phi-4

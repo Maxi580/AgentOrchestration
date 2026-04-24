@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-stack
+  namespace: maxi-agent-orchestration
+  labels:
+    app: llama-stack
+spec:
+  selector:
+    app: llama-stack
+  ports:
+    - name: http
+      port: 8321
+      targetPort: 8321

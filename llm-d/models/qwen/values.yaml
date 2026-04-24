@@ -1,10 +1,10 @@
 modelArtifacts:
-  name: "meta-llama/Llama-3.1-8B"
-  uri: "hf://meta-llama/Llama-3.1-8B"
+  name: "Qwen/Qwen3-8B"
+  uri: "hf://Qwen/Qwen3-8B"
   authSecretName: "llm-d-hf-token"
 
   labels:
-    app: vllm-llama-3-8b
+    app: vllm-qwen3-8b
     llm-d.ai/inference-serving: "true"
 
   size: 20Gi
@@ -30,7 +30,7 @@ decode:
       mountModelVolume: true
       args:
         - "--served-model-name"
-        - "meta-llama/Llama-3.1-8B"
+        - "Qwen/Qwen3-8B"
         - "--max-model-len"
         - "4096"
       env:

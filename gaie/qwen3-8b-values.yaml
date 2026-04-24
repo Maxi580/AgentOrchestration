@@ -1,0 +1,52 @@
+inferenceExtension:
+  replicas: 1
+
+  image:
+    hub: ghcr.io/llm-d
+    name: llm-d
+    pullPolicy: Always
+
+  extProcPort: 9002
+
+  pluginsConfigFile: "config.yaml"
+  pluginsCustomConfig:
+    config.yaml: |
+      apiVersion: inference.networking.x-k8s.io/v1alpha2
+      kind: EndpointPickerConfig
+      metadata:
+        name: default
+      spec:
+        plugins:
+          - type: queue-scorer
+          - type: prefix-scorer
+          - type: least-kv-cache-scorer
+          - type: max-score-picker
+
+        schedulingProfiles:
+          - name: default
+            plugins:
+              - pluginRef: queue-scorer
+                weight: 1.0
+              - pluginRef: prefix-scorer
+                weight: 1.0
+              - pluginRef: least-kv-cache-scorer
+                weight: 1.0
+              - pluginRef: max-score-picker
+
+  monitoring:
+    interval: "10s"
+    prometheus:
+      enabled: true
+
+  flags:
+    - -v=1
+
+inferencePool:
+  targetPorts:
+    - number: 8000
+
+  modelServerType: vllm
+
+  modelServers:
+    matchLabels:
+      app: vllm-qwen3-8b
