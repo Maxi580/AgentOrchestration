@@ -1,0 +1,201 @@
+# -----------------------------------------------------------
+# ConfigMap holding the Llama Stack server config
+# -----------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-stack-config
+  namespace: maxi-agent-orchestration
+data:
+  run.yaml: |
+    version: '2'
+    image_name: remote-vllm
+
+    apis:
+      - agents
+      - inference
+      - safety
+      - vector_io
+      - tool_runtime
+      - telemetry
+
+    providers:
+      inference:
+        - provider_id: vllm
+          provider_type: remote::vllm
+          config:
+            url: ${env.VLLM_URL}
+            max_tokens: 4096
+            api_token: ${env.VLLM_API_TOKEN:+fake}
+
+      agents:
+        - provider_id: meta-reference
+          provider_type: inline::meta-reference
+          config:
+            persistence_store:
+              type: sqlite
+              db_path: /data/agents_store.db
+            responses_store:
+              type: sqlite
+              db_path: /data/responses_store.db
+
+      safety:
+        - provider_id: llama-guard
+          provider_type: inline::llama-guard
+          config: {}
+
+      vector_io:
+        - provider_id: faiss
+          provider_type: inline::faiss
+          config:
+            kvstore:
+              type: sqlite
+              db_path: /data/faiss_store.db
+
+      tool_runtime:
+        - provider_id: rag-runtime
+          provider_type: inline::rag-runtime
+          config: {}
+
+      telemetry:
+        - provider_id: meta-reference
+          provider_type: inline::meta-reference
+          config: {}
+
+    models:
+      - metadata: {}
+        model_id: ${env.INFERENCE_MODEL}
+        provider_id: vllm
+        provider_model_id: ${env.INFERENCE_MODEL}
+
+    shields: []
+    vector_dbs: []
+    datasets: []
+    scoring_fns: []
+    eval_tasks: []
+    tool_groups: []
+---
+# -----------------------------------------------------------
+# Persistent storage for agent session state
+# -----------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-stack-data
+  namespace: maxi-agent-orchestration
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# -----------------------------------------------------------
+# The Llama Stack server itself
+# -----------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-stack
+  namespace: maxi-agent-orchestration
+  labels:
+    app: llama-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-stack
+  template:
+    metadata:
+      labels:
+        app: llama-stack
+    spec:
+      # Allow scheduling on GPU nodes if infra node is full,
+      # but do NOT request a GPU
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: llama-stack
+          image: docker.io/llamastack/distribution-remote-vllm:latest
+          args:
+            - "--yaml-config"
+            - "/app/config/run.yaml"
+            - "--port"
+            - "8321"
+          ports:
+            - containerPort: 8321
+              name: http
+          env:
+            - name: INFERENCE_MODEL
+              value: "Qwen/Qwen3-8B"
+            - name: VLLM_URL
+              value: "http://infra-inference-gateway-data-science-gateway-class.maxi-agent-orchestration.svc.cluster.local:80/v1"
+            - name: VLLM_API_TOKEN
+              value: "fake"
+            - name: HOME
+              value: /tmp
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: 8321
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
+      volumes:
+        - name: config
+          configMap:
+            name: llama-stack-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: llama-stack-data
+---
+# -----------------------------------------------------------
+# ClusterIP service for internal access
+# -----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-stack-svc
+  namespace: maxi-agent-orchestration
+  labels:
+    app: llama-stack
+spec:
+  selector:
+    app: llama-stack
+  ports:
+    - port: 8321
+      targetPort: 8321
+      name: http
+  type: ClusterIP
+---
+# -----------------------------------------------------------
+# OpenShift Route for browser/external access
+# -----------------------------------------------------------
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: llama-stack
+  namespace: maxi-agent-orchestration
+spec:
+  to:
+    kind: Service
+    name: llama-stack-svc
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
