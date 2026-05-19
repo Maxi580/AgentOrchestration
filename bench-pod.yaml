@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bench
+spec:
+  restartPolicy: Never
+  containers:
+    - name: bench
+      image: python:3.11-slim
+      command: ["sh", "-c"]
+      args:
+        - |
+          export PYTHONUSERBASE=/tmp/pylibs
+          export PATH=$PYTHONUSERBASE/bin:$PATH
+          pip install --quiet --user requests
+          python /scripts/benchmark.py
+      env:
+        - name: HOME
+          value: /tmp
+        - name: MODEL
+          value: "meta-llama/Llama-3.1-8B-Instruct"
+      volumeMounts:
+        - name: script
+          mountPath: /scripts
+  volumes:
+    - name: script
+      configMap:
+        name: bench-script

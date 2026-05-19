@@ -17,6 +17,15 @@ def create_agent(instructions):
     return agent.agent_id, session.session_id
 
 
+drafter_id, drafter_session = create_agent(
+    "You are a senior IT engineer. When given a problem, write a detailed troubleshooting checklist with 5 steps. Be technical and specific."
+)
+
+simplifier_id, simplifier_session = create_agent(
+    "You are a tech writer. You receive technical instructions and rewrite them in plain language that a non-technical office worker can follow. Keep it friendly and clear."
+)
+
+
 def chat(agent_id, session_id, message):
     response = client.agents.turn.create(
         agent_id=agent_id,
@@ -35,14 +44,6 @@ def chat(agent_id, session_id, message):
             return text
 
 
-drafter_id, drafter_session = create_agent(
-    "You are a senior IT engineer. When given a problem, write a detailed troubleshooting checklist with 5 steps. Be technical and specific."
-)
-
-simplifier_id, simplifier_session = create_agent(
-    "You are a tech writer. You receive technical instructions and rewrite them in plain language that a non-technical office worker can follow. Keep it friendly and clear."
-)
-
 problem = "Employee reports that Outlook keeps freezing for 30 seconds whenever they open a large email attachment."
 
 print("=== AGENT 1 (IT Engineer) ===")
@@ -51,5 +52,5 @@ print(draft)
 
 print("\n=== AGENT 2 (Tech Writer) ===")
 simplified = chat(simplifier_id, simplifier_session,
-    f"Rewrite these instructions for a non-technical user:\n\n{draft}")
+                  f"Rewrite these instructions for a non-technical user:\n\n{draft}")
 print(simplified)

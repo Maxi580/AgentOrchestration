@@ -13,5 +13,5 @@ spec:
       backendRefs:
         - group: inference.networking.k8s.io
           kind: InferencePool
-          name: gaie-qwen3
+          name: gaie-qwen
           port: 8000

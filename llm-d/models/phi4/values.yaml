@@ -40,7 +40,7 @@ decode:
           value: /tmp
 
 prefill:
-  replicas: 0
+  replicas: 1
 
 routing:
   proxy:

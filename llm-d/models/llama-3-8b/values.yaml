@@ -1,6 +1,6 @@
 modelArtifacts:
-  name: "meta-llama/Llama-3.1-8B"
-  uri: "hf://meta-llama/Llama-3.1-8B"
+  name: "meta-llama/Llama-3.1-8B-Instruct"
+  uri: "hf://meta-llama/Llama-3.1-8B-Instruct"
   authSecretName: "llm-d-hf-token"
 
   labels:
@@ -30,7 +30,7 @@ decode:
       mountModelVolume: true
       args:
         - "--served-model-name"
-        - "meta-llama/Llama-3.1-8B"
+        - "meta-llama/Llama-3.1-8B-Instruct"
         - "--max-model-len"
         - "4096"
       env:
@@ -40,7 +40,7 @@ decode:
           value: /tmp
 
 prefill:
-  replicas: 0
+  replicas: 1
 
 routing:
   proxy:
